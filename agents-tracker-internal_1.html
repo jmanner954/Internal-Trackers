@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agents — Status Tracker</title>
+<style>
+  :root {
+    --page-plane:     #0a0918;
+    --page-plane-2:   #14112f;
+    --surface-1:      #17142f;
+    --surface-1-hover:#1d1a3a;
+    --text-primary:   #ffffff;
+    --text-secondary: #b8b3d6;
+    --text-muted:     #837da8;
+    --gridline:       rgba(255,255,255,0.10);
+    --border:         rgba(255,255,255,0.10);
+    --border-hover:   rgba(124,92,252,0.55);
+    --accent:         #7c5cfc;
+    --accent-glow:    rgba(124,92,252,0.35);
+    --good:           #22c55e;
+    --warning:        #fab219;
+    --serious:        #ec835a;
+    --critical:       #f0555a;
+    --good-bg:        rgba(34,197,94,0.14);
+    --warning-bg:     rgba(250,178,25,0.14);
+    --serious-bg:     rgba(236,131,90,0.14);
+    --critical-bg:    rgba(240,85,90,0.16);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background:
+      radial-gradient(ellipse 1200px 700px at 15% -10%, rgba(124,92,252,0.22), transparent 60%),
+      radial-gradient(ellipse 900px 600px at 100% 10%, rgba(230,90,180,0.10), transparent 55%),
+      linear-gradient(180deg, var(--page-plane-2) 0%, var(--page-plane) 55%);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    color: var(--text-primary);
+  }
+  .viz-root { max-width: 920px; margin: 0 auto; padding: 40px 24px 80px; }
+  .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 36px; }
+  .brand .mark {
+    width: 26px; height: 26px; border-radius: 7px;
+    background: linear-gradient(135deg, var(--accent), #a78bfa);
+    display: flex; align-items: center; justify-content: center; flex: none;
+  }
+  .brand .mark svg { width: 16px; height: 16px; }
+  .brand .name { font-size: 15.5px; font-weight: 700; letter-spacing: -0.01em; }
+  .brand .back {
+    margin-left: auto; font-size: 12.5px; font-weight: 600; color: var(--text-muted);
+    text-decoration: none;
+  }
+  .brand .back:hover { color: var(--accent); }
+  header.page-head { margin-bottom: 28px; }
+  .eyebrow {
+    font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--accent); margin: 0 0 6px;
+  }
+  h1 { font-size: 26px; font-weight: 800; margin: 0 0 6px; letter-spacing: -0.015em; }
+  .meta { font-size: 13px; color: var(--text-muted); }
+  .callout {
+    margin-top: 20px;
+    background: var(--warning-bg);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--warning);
+    border-radius: 8px;
+    padding: 14px 16px;
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: var(--text-secondary);
+  }
+  .callout strong { color: var(--text-primary); }
+  section.group { margin-top: 36px; }
+  .group-title {
+    font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text-muted); margin: 0 0 14px; padding-bottom: 8px; border-bottom: 1px solid var(--gridline);
+  }
+  .subgroup-title {
+    font-size: 11.5px; font-weight: 700; letter-spacing: 0.04em;
+    color: var(--text-muted); margin: 22px 0 10px;
+  }
+  .card {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin-bottom: 12px;
+    transition: border-color 0.15s ease;
+  }
+  .card:hover { border-color: var(--border-hover); }
+  .card-top {
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+  .card-title { font-size: 15.5px; font-weight: 700; letter-spacing: -0.005em; color: var(--text-primary); }
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 600;
+    padding: 3px 10px 3px 8px; border-radius: 999px; white-space: nowrap;
+  }
+  .badge .dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+  .badge.good      { background: var(--good-bg);     color: var(--good); }
+  .badge.warning   { background: var(--warning-bg);  color: var(--warning); }
+  .badge.serious   { background: var(--serious-bg);  color: var(--serious); }
+  .badge.critical  { background: var(--critical-bg); color: var(--critical); }
+  .badge .dot.good     { background: var(--good); }
+  .badge .dot.warning  { background: var(--warning); }
+  .badge .dot.serious  { background: var(--serious); }
+  .badge .dot.critical { background: var(--critical); }
+  .priority-tag {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .summary { font-size: 13.5px; line-height: 1.6; color: var(--text-secondary); margin: 8px 0 14px; }
+  .card-meta {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 10px 20px; padding-top: 12px; border-top: 1px solid var(--gridline);
+  }
+  .meta-block .k { font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 3px; }
+  .meta-block .v { font-size: 13px; color: var(--text-primary); line-height: 1.5; }
+  .meta-block .v a { color: var(--accent); text-decoration: none; }
+  .meta-block .v a:hover { text-decoration: underline; }
+  .tickets { display: flex; flex-wrap: wrap; gap: 6px; }
+  .ticket-chip {
+    font-size: 11.5px; font-weight: 600; font-variant-numeric: tabular-nums;
+    padding: 2px 8px; border-radius: 5px; background: rgba(255,255,255,0.05); border: 1px solid var(--gridline);
+    color: var(--text-secondary); text-decoration: none;
+  }
+  a.ticket-chip:hover { border-color: var(--accent); color: var(--text-primary); }
+  footer.legend {
+    margin-top: 32px; padding-top: 16px; border-top: 1px solid var(--gridline);
+    font-size: 12px; color: var(--text-muted); display: flex; gap: 18px; flex-wrap: wrap; align-items: center;
+  }
+  footer.legend .item { display: inline-flex; align-items: center; gap: 6px; }
+  footer.legend .dot { width: 7px; height: 7px; border-radius: 50%; }
+</style>
+</head>
+<body>
+<div class="viz-root">
+  <div class="brand">
+    <div class="mark"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="12" cy="13" rx="7" ry="9" fill="#ffffff"/>
+          <ellipse cx="12" cy="15.5" rx="4" ry="6" fill="#7c5cfc"/>
+          <circle cx="9.3" cy="8.2" r="1" fill="#17142f"/>
+          <circle cx="14.7" cy="8.2" r="1" fill="#17142f"/>
+          <path d="M10.7 9.6 L13.3 9.6 L12 11.4 Z" fill="#f5a623"/>
+          <ellipse cx="7.8" cy="21.2" rx="2" ry="0.9" fill="#f5a623"/>
+          <ellipse cx="16.2" cy="21.2" rx="2" ry="0.9" fill="#f5a623"/>
+        </svg></div>
+    <div class="name">Ender</div>
+    <a class="back" href="index.html">&larr; All trackers</a>
+  </div>
+  
+  <header class="page-head">
+    <p class="eyebrow">Product · AI Projects</p>
+    <h1>Agents — Status Tracker</h1>
+    <p class="meta">Last updated August 19, 2026 · Owner: Jessica Manner</p>
+  </header>
+
+  <section class="group">
+    <div class="card">
+      <div class="card-top">
+        <div class="card-title">Prospect Agent</div>
+        <span class="badge good"><span class="dot good"></span>Launched</span>
+      </div>
+      <p class="summary">Fully launched across the portfolio.</p>
+      <div class="card-meta">
+        <div class="meta-block"><div class="k">Owners</div><div class="v">Jessica, Kyle Falicov</div></div>
+        <div class="meta-block"><div class="k">Target / Next Milestone</div><div class="v">Ongoing quality-of-life fixes</div></div>
+        <div class="meta-block"><div class="k">Links</div><div class="v tickets">
+          <a class="ticket-chip" href="https://ender-1337.atlassian.net/browse/ENDER-35815" target="_blank">ENDER-35815</a>
+          <a class="ticket-chip" href="https://ender-1337.atlassian.net/browse/ENDER-35848" target="_blank">ENDER-35848</a>
+          <a class="ticket-chip" href="https://ender-1337.atlassian.net/browse/ENDER-37388" target="_blank">ENDER-37388</a>
+          <a class="ticket-chip" href="https://ender-1337.atlassian.net/browse/ENDER-37365" target="_blank">ENDER-37365</a>
+          <a class="ticket-chip" href="https://ender-1337.atlassian.net/browse/ENDER-37224" target="_blank">ENDER-37224</a>
+        </div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-top">
+        <div class="card-title">Renewals Agent</div>
+        <span class="badge warning"><span class="dot warning"></span>In Progress</span>
+      </div>
+      <p class="summary">Backend work finishing up. Outstanding ticket covers delivering escalation state to the inbox and making the stand-down period configurable.</p>
+      <div class="card-meta">
+        <div class="meta-block"><div class="k">Owners</div><div class="v">Jessica, Cyd La Luz, Kyle Falicov</div></div>
+        <div class="meta-block"><div class="k">Target / Next Milestone</div><div class="v">BE work wrapping up</div></div>
+        <div class="meta-block"><div class="k">Links</div><div class="v tickets">
+          <a class="ticket-chip" href="https://ender-1337.atlassian.net/browse/ENDER-37449" target="_blank">ENDER-37449</a>
+          <a class="ticket-chip" href="https://ender-1337.atlassian.net/browse/ENDER-35285" target="_blank">ENDER-35285: Renewals Agent MVP</a>
+        </div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-top">
+        <div class="card-title">Collections Agent</div>
+        <span class="badge critical"><span class="dot critical"></span>Blocked on EG</span>
+      </div>
+      <p class="summary">Blocked on EG for now.</p>
+      <div class="card-meta">
+        <div class="meta-block"><div class="k">Owners</div><div class="v">Jessica</div></div>
+        <div class="meta-block"><div class="k">Target / Next Milestone</div><div class="v">Waiting on EG re-scoping</div></div>
+        <div class="meta-block"><div class="k">Links</div><div class="v">—</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-top">
+        <div class="card-title">Utilities Agent</div>
+        <span class="badge critical"><span class="dot critical"></span>Blocked on EG</span>
+      </div>
+      <p class="summary">Blocked on EG.</p>
+      <div class="card-meta">
+        <div class="meta-block"><div class="k">Owners</div><div class="v">Jessica</div></div>
+        <div class="meta-block"><div class="k">Target / Next Milestone</div><div class="v">Waiting on EG</div></div>
+        <div class="meta-block"><div class="k">Links</div><div class="v">—</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-top">
+        <div class="card-title">Message Orchestrator</div>
+        <span class="badge critical"><span class="dot critical"></span>Blocked</span>
+      </div>
+      <p class="summary">Will wait to do until the Tasks refactor ships. Will work on some larger UX enhancements for inbox in the meantime to make the manual responses more manageable.</p>
+      <div class="card-meta">
+        <div class="meta-block"><div class="k">Owners</div><div class="v">Jessica</div></div>
+        <div class="meta-block"><div class="k">Target / Next Milestone</div><div class="v">Launch revamped Inbox by Q4 2026</div></div>
+        <div class="meta-block"><div class="k">Links</div><div class="v">—</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-top">
+        <div class="card-title">Voice (voicemail routing/visibility)</div>
+        <span class="badge warning"><span class="dot warning"></span>In Progress</span>
+      </div>
+      <p class="summary">Voicemails should land on the PM queue and be clearly identifiable as voicemails rather than texts, since a voicemail usually means someone's waiting for a callback.</p>
+      <div class="card-meta">
+        <div class="meta-block"><div class="k">Owners</div><div class="v">Jessica</div></div>
+        <div class="meta-block"><div class="k">Target / Next Milestone</div><div class="v">Mid-September release</div></div>
+        <div class="meta-block"><div class="k">Links</div><div class="v tickets"><a class="ticket-chip" href="https://ender-1337.atlassian.net/browse/ENDER-37262" target="_blank">ENDER-37262</a></div></div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="legend">
+    <span class="item"><span class="dot" style="background:var(--good)"></span>Launched — healthy</span>
+    <span class="item"><span class="dot" style="background:var(--warning)"></span>In Progress — watch closely</span>
+    <span class="item"><span class="dot" style="background:var(--critical)"></span>Blocked — needs a decision</span>
+  </footer>
+</div>
+</body>
+</html>
