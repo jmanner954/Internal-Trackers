@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WorkOS Migration — Launch Plan</title>
+<style>
+  :root {
+    --page-plane:     #0a0918;
+    --page-plane-2:   #14112f;
+    --surface-1:      #17142f;
+    --surface-1-hover:#1d1a3a;
+    --text-primary:   #ffffff;
+    --text-secondary: #b8b3d6;
+    --text-muted:     #837da8;
+    --gridline:       rgba(255,255,255,0.10);
+    --border:         rgba(255,255,255,0.10);
+    --border-hover:   rgba(124,92,252,0.55);
+    --accent:         #7c5cfc;
+    --accent-glow:    rgba(124,92,252,0.35);
+    --good:           #22c55e;
+    --warning:        #fab219;
+    --serious:        #ec835a;
+    --critical:       #f0555a;
+    --good-bg:        rgba(34,197,94,0.14);
+    --warning-bg:     rgba(250,178,25,0.14);
+    --serious-bg:     rgba(236,131,90,0.14);
+    --critical-bg:    rgba(240,85,90,0.16);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background:
+      radial-gradient(ellipse 1200px 700px at 15% -10%, rgba(124,92,252,0.22), transparent 60%),
+      radial-gradient(ellipse 900px 600px at 100% 10%, rgba(230,90,180,0.10), transparent 55%),
+      linear-gradient(180deg, var(--page-plane-2) 0%, var(--page-plane) 55%);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    color: var(--text-primary);
+  }
+  .viz-root { max-width: 920px; margin: 0 auto; padding: 40px 24px 80px; }
+  .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 36px; }
+  .brand .mark {
+    width: 26px; height: 26px; border-radius: 7px;
+    background: linear-gradient(135deg, var(--accent), #a78bfa);
+    display: flex; align-items: center; justify-content: center; flex: none;
+  }
+  .brand .mark svg { width: 16px; height: 16px; }
+  .brand .name { font-size: 15.5px; font-weight: 700; letter-spacing: -0.01em; }
+  .brand .back {
+    margin-left: auto; font-size: 12.5px; font-weight: 600; color: var(--text-muted);
+    text-decoration: none;
+  }
+  .brand .back:hover { color: var(--accent); }
+  header.page-head { margin-bottom: 28px; }
+  .eyebrow {
+    font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--accent); margin: 0 0 6px;
+  }
+  h1 { font-size: 26px; font-weight: 800; margin: 0 0 6px; letter-spacing: -0.015em; }
+  .meta { font-size: 13px; color: var(--text-muted); }
+  .callout {
+    margin-top: 20px;
+    background: var(--critical-bg);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--critical);
+    border-radius: 8px;
+    padding: 14px 16px;
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: var(--text-secondary);
+  }
+  .callout strong { color: var(--text-primary); }
+  .callout a { color: var(--text-primary); }
+  section.group { margin-top: 36px; }
+  .group-title {
+    font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text-muted); margin: 0 0 14px; padding-bottom: 8px; border-bottom: 1px solid var(--gridline);
+  }
+  .prose { font-size: 13.5px; line-height: 1.65; color: var(--text-secondary); margin: 0 0 18px; }
+  .card {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin-bottom: 12px;
+    transition: border-color 0.15s ease;
+  }
+  .card:hover { border-color: var(--border-hover); }
+  .card-top {
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+  .card-title { font-size: 15.5px; font-weight: 700; letter-spacing: -0.005em; color: var(--text-primary); }
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 600;
+    padding: 3px 10px 3px 8px; border-radius: 999px; white-space: nowrap;
+  }
+  .badge .dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+  .badge.good      { background: var(--good-bg);     color: var(--good); }
+  .badge.warning   { background: var(--warning-bg);  color: var(--warning); }
+  .badge.serious   { background: var(--serious-bg);  color: var(--serious); }
+  .badge.critical  { background: var(--critical-bg); color: var(--critical); }
+  .badge .dot.good     { background: var(--good); }
+  .badge .dot.warning  { background: var(--warning); }
+  .badge .dot.serious  { background: var(--serious); }
+  .badge .dot.critical { background: var(--critical); }
+  .priority-tag {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .summary { font-size: 13.5px; line-height: 1.6; color: var(--text-secondary); margin: 8px 0 14px; }
+  .card-meta {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 10px 20px; padding-top: 12px; border-top: 1px solid var(--gridline);
+  }
+  .meta-block .k { font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 3px; }
+  .meta-block .v { font-size: 13px; color: var(--text-primary); line-height: 1.5; }
+  .meta-block .v a { color: var(--accent); text-decoration: none; }
+  .meta-block .v a:hover { text-decoration: underline; }
+  table.qa-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 4px; }
+  table.qa-table th {
+    text-align: left; font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+    color: var(--text-muted); padding: 0 10px 8px; border-bottom: 1px solid var(--gridline);
+  }
+  table.qa-table td {
+    padding: 10px 10px; border-bottom: 1px solid var(--gridline); vertical-align: top; color: var(--text-secondary);
+  }
+  table.qa-table td.num { color: var(--text-muted); width: 28px; }
+  table.qa-table td.flow { color: var(--text-primary); font-weight: 600; white-space: nowrap; }
+  table.qa-table a { color: var(--accent); text-decoration: none; }
+  table.qa-table a:hover { text-decoration: underline; }
+  ul.scenario-list { margin: 10px 0 0; padding-left: 18px; font-size: 13px; line-height: 1.7; color: var(--text-secondary); }
+  ul.trigger-list { margin: 10px 0 0; padding-left: 18px; font-size: 13.5px; line-height: 1.7; color: var(--text-secondary); }
+  .note {
+    margin-top: 14px; font-size: 12.5px; font-style: italic; color: var(--text-muted);
+  }
+  footer.legend {
+    margin-top: 32px; padding-top: 16px; border-top: 1px solid var(--gridline);
+    font-size: 12px; color: var(--text-muted); display: flex; gap: 18px; flex-wrap: wrap; align-items: center;
+  }
+  footer.legend .item { display: inline-flex; align-items: center; gap: 6px; }
+  footer.legend .dot { width: 7px; height: 7px; border-radius: 50%; }
+</style>
+</head>
+<body>
+<div class="viz-root">
+  <div class="brand">
+    <div class="mark"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="12" cy="13" rx="7" ry="9" fill="#ffffff"/>
+          <ellipse cx="12" cy="15.5" rx="4" ry="6" fill="#7c5cfc"/>
+          <circle cx="9.3" cy="8.2" r="1" fill="#17142f"/>
+          <circle cx="14.7" cy="8.2" r="1" fill="#17142f"/>
+          <path d="M10.7 9.6 L13.3 9.6 L12 11.4 Z" fill="#f5a623"/>
+          <ellipse cx="7.8" cy="21.2" rx="2" ry="0.9" fill="#f5a623"/>
+          <ellipse cx="16.2" cy="21.2" rx="2" ry="0.9" fill="#f5a623"/>
+        </svg></div>
+    <div class="name">Ender</div>
+    <a class="back" href="index.html">&larr; All trackers</a>
+  </div>
+
+  <header class="page-head">
+    <p class="eyebrow">Product · AI Projects · Internal</p>
+    <h1>WorkOS Migration — Launch Plan</h1>
+    <p class="meta">Draft for review · August 18, 2026 · Owner: Jessica Manner</p>
+    <div class="callout">
+      <strong>Launch blocker — <a href="https://ender-1337.atlassian.net/browse/ENDER-37178" target="_blank">ENDER-37178</a>:</strong>
+      WorkOS blocks tenant/contact email edits and prevents onboarding-link testing. In-app email-edit is blocked and unfixed (status: In Progress). Must be resolved before the mid-Sept release.
+    </div>
+  </header>
+
+  <section class="group">
+    <div class="group-title">Overview</div>
+    <p class="prose">We're migrating login and account-info management to WorkOS AuthKit. Applicants, residents, and vendors will be able to sign up and log in with a Google or Microsoft account (Social Login) or a one-time emailed code (Magic Auth) instead of an Ender password. Internally, Ender/EG employees log in via their company identity provider (Enterprise SSO) — Ender via Google, EG via their Microsoft/Entra ID account. Once an account is tied to one of these, profile edits (starting with email) are managed through that identity provider rather than in-product.</p>
+  </section>
+
+  <section class="group">
+    <div class="group-title">Phases</div>
+
+    <div class="card">
+      <div class="card-top">
+        <div>
+          <span class="priority-tag">Phase 0</span>
+          <div class="card-title">Ender internal SSO</div>
+        </div>
+        <span class="badge good"><span class="dot good"></span>Done</span>
+      </div>
+      <p class="summary">Ender employees logging in via Google internally.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-top">
+        <div>
+          <span class="priority-tag">Phase 1</span>
+          <div class="card-title">Applicant / resident / vendor login</div>
+        </div>
+        <span class="badge critical"><span class="dot critical"></span>Blocked — pushed</span>
+      </div>
+      <p class="summary">Applicant/resident/vendor accounts + login via Social Login &amp; Magic Auth. Timed to land outside the heavy rent-payment window. Includes a one-time historical data sync into WorkOS and turning on AuthKit. Blocked on ENDER-37178 (above) and the failing flows below.</p>
+      <div class="card-meta">
+        <div class="meta-block"><div class="k">Target</div><div class="v">Mid-September release</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-top">
+        <div>
+          <span class="priority-tag">Phase 2</span>
+          <div class="card-title">EG enterprise SSO / Directory Sync</div>
+        </div>
+        <span class="badge serious"><span class="dot serious"></span>Not yet scheduled</span>
+      </div>
+      <p class="summary">Pending sign-off from EG leadership, since it carries additional cost that gets passed on to EG.</p>
+    </div>
+  </section>
+
+  <section class="group">
+    <div class="group-title">QA — Impacted Flows</div>
+    <p class="prose">9 core flows identified, checked against live Jira status (pending Werner's manual reconfirmation):</p>
+    <table class="qa-table">
+      <thead><tr><th>#</th><th>Flow</th><th>Result</th></tr></thead>
+      <tbody>
+        <tr><td class="num">1</td><td class="flow">New applicant — public application link</td><td><a href="https://ender-1337.atlassian.net/browse/ENDER-37176" target="_blank">Failed — ENDER-37176</a>: WorkOS public application link creates inactive user then routes to sign-in</td></tr>
+        <tr><td class="num">2</td><td class="flow">Existing applicant — public application link</td><td><a href="https://ender-1337.atlassian.net/browse/ENDER-37176" target="_blank">Failed — ENDER-37176</a>: WorkOS public application link creates inactive user then routes to sign-in</td></tr>
+        <tr><td class="num">3</td><td class="flow">New applicant added by Ops — durable onboarding link</td><td><a href="https://ender-1337.atlassian.net/browse/ENDER-37177" target="_blank">Failed — ENDER-37177</a>: WorkOS Add Applicant flow shows wrong-user invitation error and breaks application</td></tr>
+        <tr><td class="num">4</td><td class="flow">Prospect — apply via token link</td><td>Passed</td></tr>
+        <tr><td class="num">5</td><td class="flow">Tenant — resend onboarding</td><td><a href="https://ender-1337.atlassian.net/browse/ENDER-37179" target="_blank">Failed — ENDER-37179</a>: WorkOS tenant and vendor onboarding links hit API /auth/onboard 404</td></tr>
+        <tr><td class="num">6</td><td class="flow">Vendor onboarding link</td><td><a href="https://ender-1337.atlassian.net/browse/ENDER-37179" target="_blank">Failed — ENDER-37179</a>: WorkOS tenant and vendor onboarding links hit API /auth/onboard 404</td></tr>
+        <tr><td class="num">7</td><td class="flow">Rollback — previously issued onboarding link still resolves to legacy session</td><td>Pending reconfirmation</td></tr>
+        <tr><td class="num">8</td><td class="flow">Logout — session/token revocation (legacy-cookie + JWT)</td><td>Pending reconfirmation</td></tr>
+        <tr><td class="num">9</td><td class="flow">Masquerade logout — restores admin's own session</td><td>Pending reconfirmation</td></tr>
+      </tbody>
+    </table>
+    <p class="prose" style="margin-top:16px;">Plus these apply-flow scenarios to cover, tracked in the QA tracker (not Jira) and closed out before launch:</p>
+    <ul class="scenario-list">
+      <li>Prospect w/ token link · Prospect w/ no token link · Tenant w/ no token link</li>
+      <li>Brand new user · New user from apply token link · Existing user from apply token link</li>
+    </ul>
+  </section>
+
+  <section class="group">
+    <div class="group-title">Rollback Plan</div>
+    <p class="prose">Launch is gated behind a feature flag — if something's catastrophic, we flip it off and public flows revert to the legacy login path. Flow 7 above suggests links issued before a rollback still resolve safely. Rollback triggers on any one of the following:</p>
+    <ul class="trigger-list">
+      <li>Any one of the 9 core flows above is confirmed broken for any user — no threshold needed, auth is binary.</li>
+      <li>Login/onboarding failure rate exceeds ~5–10% over a sustained 15-minute window.</li>
+      <li>An abnormal spike in login-related support tickets relative to traffic.</li>
+    </ul>
+    <p class="note">Exact mechanics (flag scope, who can flip it, what happens to accounts already created in WorkOS, monitoring) still TBD — Jess + Eng to align separately.</p>
+  </section>
+
+  <footer class="legend">
+    <span class="item"><span class="dot" style="background:var(--good)"></span>Done / Passed — healthy</span>
+    <span class="item"><span class="dot" style="background:var(--warning)"></span>In progress — watch closely</span>
+    <span class="item"><span class="dot" style="background:var(--serious)"></span>Pending — waiting on someone else</span>
+    <span class="item"><span class="dot" style="background:var(--critical)"></span>Blocked / Failed — needs a decision</span>
+  </footer>
+</div>
+</body>
+</html>
